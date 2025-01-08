@@ -1,8 +1,13 @@
-from src.constants import MODEL_NAME, claude_pdf_url, source_df_path, ANTHROPIC_API_KEY
-import pandas as pd
-from pydantic import HttpUrl, ValidationError
-from anthropic import Anthropic
 from io import StringIO
+
+import pandas as pd
+from anthropic import Anthropic
+from pydantic import HttpUrl, ValidationError
+
+from logger import get_logger
+from src.constants import ANTHROPIC_API_KEY, MODEL_NAME, claude_pdf_url, source_df_path
+
+logger = get_logger(__name__)
 
 prompt = """Please extract the main benchmark table from this PDF document. 
             - Include the name of the benchmarks as rows and the names of the models evaluated as columns.
@@ -12,96 +17,105 @@ prompt = """Please extract the main benchmark table from this PDF document.
             
             Please maintain the exact numerical values from the original table. Respond with the table and nothing else, in a csv format."""
 
-pdf_base64_string = None # this would be the input to Claude
+pdf_base64_string = None  # this would be the input to Claude
 
 messages = [
     {
-        "role": 'user',
+        "role": "user",
         "content": [
-            {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_base64_string}},
-            {"type": "text", "text": prompt}
-        ]
+            {
+                "type": "document",
+                "source": {
+                    "type": "base64",
+                    "media_type": "application/pdf",
+                    "data": pdf_base64_string,
+                },
+            },
+            {"type": "text", "text": prompt},
+        ],
     }
 ]
 
+
 def get_completion(client, messages):
-    return client.messages.create(
-        model=MODEL_NAME,
-        max_tokens=2048,
-        messages=messages
-    ).content[0].text
+    return (
+        client.messages.create(model=MODEL_NAME, max_tokens=2048, messages=messages)
+        .content[0]
+        .text
+    )
+
 
 client = Anthropic(
-        default_headers={
-            "anthropic-beta": "pdfs-2024-09-25"
-        },
-        api_key=ANTHROPIC_API_KEY
+    default_headers={"anthropic-beta": "pdfs-2024-09-25"}, api_key=ANTHROPIC_API_KEY
 )
 
-def is_valid_url(s: str)->bool:
+
+def is_valid_url(s: str) -> bool:
     try:
         HttpUrl(s)
         return True
     except ValidationError:
         return False
 
+
 def parse_source_url(source: str) -> str:
-   """Extract PDF URL from general link"""
-   if 'arxiv.org' in source:
-       if '/abs/' in source:
-           return source.replace('/abs/', '/pdf/') + '.pdf'
-       if '/pdf/' not in source:
-           return source + '.pdf'
-   elif 'aclanthology.org' in source:
-       return source + '.pdf'
-   return source
+    """Extract PDF URL from general link"""
+    if "arxiv.org" in source:
+        if "/abs/" in source:
+            return source.replace("/abs/", "/pdf/") + ".pdf"
+        if "/pdf/" not in source:
+            return source + ".pdf"
+    elif "aclanthology.org" in source:
+        return source + ".pdf"
+    return source
+
 
 def get_sources(
-        input_df: pd.DataFrame, 
-        source_type: str,
-        origin_url: str
-        ) -> pd.DataFrame:
-   """
-   Input: df with schema:
-       - name: str (name of benchmark or model)  
-       - source: str
-   Output: df with schema:
-       - name: str 
-       - url: str - url of pdf/source to crawl
-       - crawled_timestamp: datetime64 - when source was crawled
-       - added_timestamp: datetime64 - when source was added to db
-       - type: SourceType (model/benchmark)
-       - success: bool - whether crawl succeeded
-   """
-   df = input_df.copy()
+    input_df: pd.DataFrame, source_type: str, origin_url: str
+) -> pd.DataFrame:
+    """
+    Input: df with schema:
+        - name: str (name of benchmark or model)
+        - source: str
+    Output: df with schema:
+        - name: str
+        - url: str - url of pdf/source to crawl
+        - crawled_timestamp: datetime64 - when source was crawled
+        - added_timestamp: datetime64 - when source was added to db
+        - type: SourceType (model/benchmark)
+        - success: bool - whether crawl succeeded
+    """
+    df = input_df.copy()
 
-   # Check input df schema
-   assert all((col in list(df.columns) for col in ["name", "source"]))
+    # Check input df schema
+    assert all((col in list(df.columns) for col in ["name", "source"]))
 
-   # Only keep rows with a valid URL
-   df = df[df['source'].apply(is_valid_url)]
-   
-   df = df.replace('-', None)
+    # Only keep rows with a valid URL
+    df = df[df["source"].apply(is_valid_url)]
 
-   df = df.dropna(subset='source')
+    df = df.replace("-", None)
 
+    df = df.dropna(subset="source")
 
     # Get output df
-   
-   now = pd.Timestamp.now()
-   
-   result_df = pd.DataFrame({
-       "name": df["name"],
-       "url": df["source"].apply(lambda x: parse_source_url(x)),
-       "origin_url": origin_url,
-       "crawled_timestamp": None,
-       "added_timestamp": now, 
-       "type": source_type,
-       "success": None,
-       "cost": None
-   })
 
-   return result_df
+    now = pd.Timestamp.now()
+
+    result_df = pd.DataFrame(
+        {
+            "name": df["name"],
+            "url": df["source"].apply(lambda x: parse_source_url(x)),
+            "origin_url": origin_url,
+            "crawled_timestamp": None,
+            "added_timestamp": now,
+            "type": source_type,
+            "success": None,
+            "cost": None,
+        }
+    )
+
+    return result_df
+
 
 if __name__ == "__main__":
     completion = """name,test_type,Claude 3 Opus,Claude 3 Sonnet,Claude 3 Haiku,GPT-4,GPT-3.5,Gemini 1.0 Ultra,Gemini 1.5 Pro,Gemini 1.0 Pro,source
@@ -126,5 +140,3 @@ if __name__ == "__main__":
     source_df = get_sources(df, "benchmark", claude_pdf_url)
 
     source_df.to_csv(source_df_path, index=False)
-
-
