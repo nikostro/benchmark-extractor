@@ -1,0 +1,19 @@
+[project]
+name = "benchmark-extractor"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "anthropic>=0.42.0",
+    "ipykernel>=6.29.5",
+    "markitdown>=0.0.1a3",
+    "pandera>=0.22.1",
+    "tabula-py>=2.10.0",
+]
+
+[tool.poetry]
+packages = [
+    { include = "src" }
+]
+
