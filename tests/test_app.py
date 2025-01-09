@@ -67,3 +67,7 @@ def test_get_sources():
         expected_df[cols_to_compare].reset_index(drop=True),
         check_exact=True,
     )
+
+
+def test_get_pdf():
+    """Test getting pdf URL for extraction."""
