@@ -9,8 +9,8 @@ from utils import download_file, encode_file  # Update with your actual module
 
 # Constants for test data
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
-TEST_FILE_PATH = TEST_DATA_DIR / "test_file.pdf"  # Update with your actual filename
-TEST_FILE_URL = "https://example.com/test_file.pdf"  # Update with your actual URL
+TEST_FILE_PATH = TEST_DATA_DIR / "fw9.pdf"
+TEST_FILE_URL = "https://www.irs.gov/pub/irs-pdf/fw9.pdf"
 
 
 @pytest.fixture(scope="session")
@@ -37,6 +37,42 @@ def mock_responses():
 
 
 class TestDownloadFile:
+    @pytest.mark.integration
+    def test_real_download(self, test_file):
+        """Integration test that performs actual download and compares with test file"""
+        test_path, expected_content = test_file
+
+        try:
+            downloaded_path = download_file(TEST_FILE_URL)
+
+            # Verify file exists and has correct name
+            assert downloaded_path.exists()
+            assert downloaded_path.is_file()
+            assert downloaded_path.name == TEST_FILE_PATH.name
+
+            # Verify it's a valid PDF and compare key characteristics
+            with open(downloaded_path, "rb") as f:
+                downloaded_content = f.read()
+
+            # Check it's a PDF
+            assert downloaded_content.startswith(b"%PDF-")
+            assert downloaded_content.rstrip(b"\n").endswith(b"%%EOF")
+
+            # Check file sizes are within 10% of each other
+            downloaded_size = len(downloaded_content)
+            expected_size = len(expected_content)
+            size_difference_ratio = abs(downloaded_size - expected_size) / expected_size
+            assert (
+                size_difference_ratio < 0.10
+            ), f"File size differs by more than 10%: {size_difference_ratio:.2%}"
+
+        finally:
+            # Cleanup temporary download
+            if downloaded_path.exists():
+                downloaded_path.unlink()
+            if downloaded_path.parent.exists():
+                downloaded_path.parent.rmdir()
+
     def test_successful_download(self, mock_responses, test_file):
         """Test successful file download"""
         file_path, expected_content = test_file
