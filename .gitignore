@@ -14,7 +14,7 @@ wheels/
 # Miscellaneous project data
 data
 notebooks
-tests/test_data
+test_data
 
 # Secrets
 constants.py
