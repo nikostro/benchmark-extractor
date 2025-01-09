@@ -5,6 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
+.DS_Store
 
 # Virtual environments
 .venv
@@ -14,7 +15,6 @@ wheels/
 # Miscellaneous project data
 data
 notebooks
-test_data
 
 # Secrets
 constants.py

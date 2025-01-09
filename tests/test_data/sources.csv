@@ -1,0 +1,13 @@
+name,url,origin_url,crawled_timestamp,added_timestamp,type,success,cost
+    MMLU,https://arxiv.org/pdf/2201.11903.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    MATH,https://arxiv.org/pdf/2103.03874.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    GSM8K,https://arxiv.org/pdf/2110.14168.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    HumanEval,https://arxiv.org/pdf/2107.03374.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    GPQA (Diamond),https://arxiv.org/pdf/2311.12022.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    MGSM,https://arxiv.org/pdf/2210.03057.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    DROP,https://aclanthology.org/N19-1246/.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    HellaSwag,https://arxiv.org/pdf/1905.07830.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    PubMedQA,https://arxiv.org/pdf/1909.06146.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    WinoGrande,https://arxiv.org/pdf/1907.10641.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    RACE-H,https://aclanthology.org/D17-1082.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,
+    APPS,https://arxiv.org/pdf/2108.07732.pdf,https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf,,2025-01-09 11:24:03.786599,benchmark,,

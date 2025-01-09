@@ -4,7 +4,7 @@ import pandas as pd
 from pydantic import HttpUrl, ValidationError
 
 import utils
-from constants import claude_pdf_url, source_df_path
+from constants import claude_pdf_url, sources_df_path
 from llm import get_completion
 from logger import get_logger
 
@@ -96,24 +96,51 @@ def main(source_url: str):
     """Crawl URL and return source_df"""
     logger.info("Starting main script execution")
 
-    logger.info(f"Downloading source from URL {source_url}")
-
+    logger.info(f"Downloading source file from {source_url}")
     source_fpath = utils.download_file(source_url)
+    logger.info(f"Successfully downloaded file from {source_url}")
 
-    logger.info("Encoding file for API request")
+    try:
+        source_file_base64 = utils.encode_file(source_fpath)
+        logger.info("Successfully encoded source file")
 
-    source_file_base64 = utils.encode_file(source_fpath)
+    except Exception as e:
+        logger.error(f"Failed to encode file {source_fpath}: {e}")
+        raise
 
-    completion = get_completion(source_file_base64)
+    try:
+        completion = get_completion(source_file_base64)
+        logger.info("Successfully got Claude response of benchmark table")
 
-    df = pd.read_csv(StringIO(completion))
-    logger.debug(f"Created DataFrame with shape: {df.shape}")
+    except Exception as e:
+        logger.error(f"Failed to get completion: {e}")
+        raise
 
-    logger.info("Processing sources")
-    source_df = get_sources(df, "benchmark", source_url)
+    try:
+        benchmark_df = pd.read_csv(StringIO(completion))
+        logger.info("Successfully created benchmark DataFrame")
 
-    logger.info(f"Saving results to {source_df_path}")
-    source_df.to_csv(source_df_path, index=False)
+    except Exception as e:
+        logger.error(f"Failed to create benchmark DataFrame: {e}")
+        raise
+
+    try:
+        logger.info("Processing sources")
+        source_df = get_sources(benchmark_df, "benchmark", source_url)
+        logger.info("Successfully processed sources")
+
+    except Exception as e:
+        logger.error(f"Failed to process sources: {e}")
+        raise
+
+    try:
+        logger.info(f"Saving results to {sources_df_path}")
+        source_df.to_csv(sources_df_path, index=False)
+        logger.info("Successfully saved results")
+
+    except Exception as e:
+        logger.error(f"Failed to save results to {sources_df_path}: {e}")
+        raise
 
 
 if __name__ == "__main__":
