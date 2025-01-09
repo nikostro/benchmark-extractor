@@ -133,7 +133,7 @@ def get_sources(
             }
         )
         logger.info(f"Created result DataFrame with {len(result_df)} rows")
-        return result_df
+        return result_df.reset_index(drop=True)
     except Exception:
         logger.error("Error creating result DataFrame", exc_info=True)
         raise
