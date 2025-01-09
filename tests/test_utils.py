@@ -66,6 +66,11 @@ class TestDownloadFile:
                 size_difference_ratio < 0.10
             ), f"File size differs by more than 10%: {size_difference_ratio:.2%}"
 
+            # Could add more PDF-specific comparisons if needed:
+            # - Compare text content using PyPDF2
+            # - Compare number of pages
+            # - Compare metadata
+
         finally:
             # Cleanup temporary download
             if downloaded_path.exists():
@@ -115,6 +120,32 @@ class TestDownloadFile:
 
         with pytest.raises(RequestException):
             download_file(TEST_FILE_URL)
+
+
+@pytest.mark.integration
+def test_download_and_encode():
+    """Integration test that downloads a file and encodes it"""
+    try:
+        # Download the file
+        downloaded_path = download_file(TEST_FILE_URL)
+
+        # Encode the downloaded file
+        encoded = encode_file(downloaded_path)
+
+        # Verify it's a valid base64 string
+        assert isinstance(encoded, str)
+
+        # Decode and verify it's a PDF
+        decoded = base64.b64decode(encoded.encode("utf-8"))
+        assert decoded.startswith(b"%PDF-")
+        assert decoded.rstrip(b"\n").endswith(b"%%EOF")
+
+    finally:
+        # Cleanup temporary download
+        if downloaded_path.exists():
+            downloaded_path.unlink()
+        if downloaded_path.parent.exists():
+            downloaded_path.parent.rmdir()
 
 
 class TestEncodeFile:
