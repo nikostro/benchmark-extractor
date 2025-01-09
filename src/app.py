@@ -4,7 +4,7 @@ import pandas as pd
 from pydantic import HttpUrl, ValidationError
 
 import utils
-from constants import claude_pdf_url, sources_df_path
+from constants import benchmark_results_path, benchmark_sources_path, claude_pdf_url
 from llm import get_completion
 from logger import get_logger
 
@@ -92,10 +92,8 @@ def get_sources(
         raise
 
 
-def main(source_url: str):
-    """Crawl URL and return source_df"""
-    logger.info("Starting main script execution")
-
+def crawl_model_url(source_url: str) -> None:
+    """Crawl model URL and save source_df and benchmark_results_df"""
     logger.info(f"Downloading source file from {source_url}")
     source_fpath = utils.download_file(source_url)
     logger.info(f"Successfully downloaded file from {source_url}")
@@ -118,7 +116,10 @@ def main(source_url: str):
 
     try:
         benchmark_df = pd.read_csv(StringIO(completion))
-        logger.info("Successfully created benchmark DataFrame")
+        benchmark_df.to_csv(benchmark_results_path, index=False)
+        logger.info(
+            "Successfully loaded Claude response into df and saved benchmark results"
+        )
 
     except Exception as e:
         logger.error(f"Failed to create benchmark DataFrame: {e}")
@@ -134,13 +135,27 @@ def main(source_url: str):
         raise
 
     try:
-        logger.info(f"Saving results to {sources_df_path}")
-        source_df.to_csv(sources_df_path, index=False)
+        logger.info(f"Saving results to {benchmark_sources_path}")
+        source_df.to_csv(benchmark_sources_path, index=False)
         logger.info("Successfully saved results")
 
     except Exception as e:
-        logger.error(f"Failed to save results to {sources_df_path}: {e}")
+        logger.error(f"Failed to save results to {benchmark_sources_path}: {e}")
         raise
+
+
+def main(source_df_path: str):
+    """Crawls urls from source_df."""
+
+    full_sources_df = pd.read_csv(source_df_path)
+
+    row_to_crawl = full_sources_df.loc[0]
+    url_to_crawl = row_to_crawl["url"]
+    url_to_crawl = str(url_to_crawl)  # TEMP: gets rid of type warning
+
+    assert row_to_crawl["type"] == "model"
+
+    crawl_model_url(url_to_crawl)
 
 
 if __name__ == "__main__":

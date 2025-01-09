@@ -5,12 +5,13 @@ import pytest
 import responses
 from requests.exceptions import RequestException
 
+from constants import claude_pdf_url
 from utils import download_file, encode_file  # Update with your actual module
 
 # Constants for test data
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
-TEST_FILE_PATH = TEST_DATA_DIR / "fw9.pdf"
-TEST_FILE_URL = "https://www.irs.gov/pub/irs-pdf/fw9.pdf"
+TEST_FILE_URL = claude_pdf_url
+TEST_FILE_PATH = TEST_DATA_DIR / "claude_modelcard_excerpt.pdf"
 
 
 @pytest.fixture(scope="session")
