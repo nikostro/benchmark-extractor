@@ -1,10 +1,11 @@
+from datetime import datetime
 from io import StringIO
 
 import pandas as pd
 from pydantic import HttpUrl, ValidationError
 
 import utils
-from constants import benchmark_results_path, benchmark_sources_path, claude_pdf_url
+from constants import benchmark_results_path, benchmark_sources_path, model_sources_path
 from llm import get_completion
 from logger import get_logger
 
@@ -135,13 +136,38 @@ def crawl_model_url(source_url: str) -> None:
         raise
 
     try:
-        logger.info(f"Saving results to {benchmark_sources_path}")
-        source_df.to_csv(benchmark_sources_path, index=False)
-        logger.info("Successfully saved results")
+        logger.info(f"Appending benchmark_sources {benchmark_sources_path}")
+
+        try:
+            # Try to load existing file
+            existing_df = pd.read_csv(benchmark_sources_path)
+
+            # Filter source_df to only include new URLs
+            new_rows = source_df[~source_df["url"].isin(existing_df["url"])]
+
+            if len(new_rows) > 0:
+                # Append new rows and save
+                updated_df = pd.concat([existing_df, new_rows], ignore_index=True)
+                updated_df.to_csv(benchmark_sources_path, index=False)
+                logger.info(
+                    f"Successfully appended {len(new_rows)} new rows to existing file"
+                )
+            else:
+                logger.info("No new URLs to add, existing file unchanged")
+
+        except FileNotFoundError:
+            # If file doesn't exist, save the new dataframe
+            logger.info(
+                f"No existing file found at {benchmark_sources_path}, creating new file"
+            )
+            source_df.to_csv(benchmark_sources_path, index=False)
+            logger.info("Successfully created new file with results")
 
     except Exception as e:
-        logger.error(f"Failed to save results to {benchmark_sources_path}: {e}")
-        raise
+        # If loading/appending fails for other reasons, overwrite the file
+        logger.warning(f"Error while trying to append: {e}. Overwriting file instead")
+        source_df.to_csv(benchmark_sources_path, index=False)
+        logger.info("Successfully overwrote file with new results")
 
 
 def main(source_df_path: str):
@@ -153,10 +179,23 @@ def main(source_df_path: str):
     url_to_crawl = row_to_crawl["url"]
     url_to_crawl = str(url_to_crawl)  # TEMP: gets rid of type warning
 
-    assert row_to_crawl["type"] == "model"
-
     crawl_model_url(url_to_crawl)
+
+    # Update the crawled row
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    full_sources_df.loc[0, "crawled_timestamp"] = current_time
+    full_sources_df.loc[0, "success"] = True
+    full_sources_df.loc[0, "cost"] = 0.1
+
+    # Save the updated dataframe
+    try:
+        logger.info(f"Updating crawl metadata in {source_df_path}")
+        full_sources_df.to_csv(source_df_path, index=False)
+        logger.info("Successfully successfully updated crawl metadata.")
+    except Exception as e:
+        logger.error(f"Failed to save updated results to {source_df_path}: {e}")
+        raise
 
 
 if __name__ == "__main__":
-    main(claude_pdf_url)
+    main(model_sources_path)
