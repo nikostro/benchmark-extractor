@@ -59,16 +59,21 @@ def get_sources(
         logger.error(f"Missing required columns. Found: {list(df.columns)}")
         raise ValueError(f"DataFrame must contain columns: {required_cols}")
 
-    # Only keep rows with a valid URL
+    # First remove blank/empty sources
     initial_rows = len(df)
-    df = df[df["source"].apply(is_valid_url)]
-    filtered_rows = len(df)
-    logger.info(f"Filtered {initial_rows - filtered_rows} invalid URLs")
-
     df = df.replace("-", None)
     df = df.dropna(subset="source")
+    rows_after_blanks = len(df)
+    logger.info(f"Removed {initial_rows - rows_after_blanks} rows with empty sources")
+
+    # Then filter invalid URLs
+    valid_url_mask = df["source"].apply(is_valid_url)
+    invalid_urls = df[~valid_url_mask]["source"].tolist()
+    df = df[valid_url_mask]
     final_rows = len(df)
-    logger.info(f"Removed {filtered_rows - final_rows} rows with empty sources")
+
+    logger.info(f"Filtered {rows_after_blanks - final_rows} invalid URLs")
+    logger.debug("Invalid URLs were:\n" + "\n".join(f"- {url}" for url in invalid_urls))
 
     # Get output df
     now = pd.Timestamp.now()
@@ -191,11 +196,12 @@ def main(source_df_path: str):
     try:
         logger.info(f"Updating crawl metadata in {source_df_path}")
         full_sources_df.to_csv(source_df_path, index=False)
-        logger.info("Successfully successfully updated crawl metadata.")
+        logger.info("Successfully updated crawl metadata.")
     except Exception as e:
         logger.error(f"Failed to save updated results to {source_df_path}: {e}")
         raise
 
 
 if __name__ == "__main__":
+    logger.setLevel("DEBUG")
     main(model_sources_path)
